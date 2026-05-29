@@ -132,18 +132,29 @@ export function parseDescripcion(raw: string): ParsedDescripcion {
     afterTokens.unshift(restOfFirst);
   }
 
-  // marca = primer token después de la medida.
-  const marca = afterTokens.length > 0 ? afterTokens[0] : null;
-  let modeloTokens = afterTokens.slice(1);
+  // Algunas descripciones traen el índice de carga/velocidad (o ply/flags)
+  // ANTES de la marca: "185/65R15 88H BROAD PEAK...". Saltamos esos specs
+  // iniciales para que la marca no quede como "88H".
+  const leadingSpecs: string[] = [];
+  let startIdx = 0;
+  while (startIdx < afterTokens.length && isSpecToken(afterTokens[startIdx])) {
+    leadingSpecs.push(afterTokens[startIdx]);
+    startIdx += 1;
+  }
+
+  // marca = primer token no-spec después de la medida.
+  const marca = startIdx < afterTokens.length ? afterTokens[startIdx] : null;
+  const modeloTokens = afterTokens.slice(startIdx + 1);
 
   // Recortar specs desde el FINAL del modelo mientras parezcan specs.
-  const specsTokens: string[] = [];
+  const trailingSpecs: string[] = [];
   while (modeloTokens.length > 0 && isSpecToken(modeloTokens[modeloTokens.length - 1])) {
-    specsTokens.unshift(modeloTokens.pop() as string);
+    trailingSpecs.unshift(modeloTokens.pop() as string);
   }
 
   const modelo = modeloTokens.length > 0 ? modeloTokens.join(' ') : null;
-  const specs = specsTokens.length > 0 ? specsTokens.join(' ') : null;
+  const specsCombined = [...leadingSpecs, ...trailingSpecs];
+  const specs = specsCombined.length > 0 ? specsCombined.join(' ') : null;
 
   return {
     descripcion,
