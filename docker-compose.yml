@@ -1,0 +1,35 @@
+# Un solo servicio: el backend sirve la API + el SPA de React en el mismo
+# puerto (un solo enlace). PostgreSQL es EXTERNA (vía DATABASE_URL en .env).
+#
+#   docker compose up --build -d        -> app en http://localhost
+#
+# El servicio "db" (PostgreSQL local) es solo para desarrollo:
+#   docker compose --profile dev up
+
+services:
+  app:
+    build: .
+    env_file: .env
+    environment:
+      RUN_MIGRATIONS: "true"
+    ports:
+      - "80:3001"
+    restart: unless-stopped
+
+  # ── DB local opcional (solo dev, no se usa en producción) ──────────────────
+  db:
+    image: postgres:16
+    profiles:
+      - dev
+    environment:
+      POSTGRES_USER: oriental
+      POSTGRES_PASSWORD: oriental_dev_password
+      POSTGRES_DB: oriental
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  pgdata:

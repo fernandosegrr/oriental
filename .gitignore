@@ -1,0 +1,28 @@
+# Dependencies
+**/node_modules/
+
+# Build output
+**/dist/
+**/build/
+*.tsbuildinfo
+
+# Environment secrets — NEVER commit the real .env
+.env
+# .env.example is intentionally NOT ignored
+
+# Logs
+*.log
+**/logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+
+# Local config overrides
+*.local
+
+# Claude Code local settings (personales, no compartir)
+.claude/settings.local.json

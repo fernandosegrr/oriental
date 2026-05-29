@@ -1,0 +1,4 @@
+# Normaliza saltos de línea a LF en el repo (evita problemas Windows/Linux).
+* text=auto eol=lf
+# Los scripts de shell SIEMPRE deben ser LF o se rompen en el contenedor Linux.
+*.sh text eol=lf
