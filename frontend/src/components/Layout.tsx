@@ -22,6 +22,7 @@ import {
   useNavigate,
 } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { HelpChat } from './HelpChat';
 
 interface NavItem {
   label: string;
@@ -58,7 +59,8 @@ export function Layout({ children }: { children: ReactNode }) {
   );
 
   return (
-    <AppShell
+    <>
+      <AppShell
       header={{ height: 60 }}
       navbar={{
         width: 240,
@@ -111,6 +113,8 @@ export function Layout({ children }: { children: ReactNode }) {
       </AppShell.Navbar>
 
       <AppShell.Main>{children}</AppShell.Main>
-    </AppShell>
+      </AppShell>
+      <HelpChat />
+    </>
   );
 }

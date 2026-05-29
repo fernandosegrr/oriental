@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 import authRouter from './routes/auth';
 import usersRouter from './routes/users';
 import inventoryRouter from './routes/inventory';
+import assistantRouter from './routes/assistant';
 import { notFound, errorHandler } from './middleware/error';
 
 const app = express();
@@ -26,6 +27,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/inventory', inventoryRouter);
+app.use('/api/assistant', assistantRouter);
 
 // Modo "un solo enlace": servir el frontend compilado desde el mismo backend.
 // Si FRONTEND_DIR está definido y existe, sirve los estáticos y hace fallback

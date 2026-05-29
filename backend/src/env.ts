@@ -11,6 +11,11 @@ const EnvSchema = z.object({
   // Clave que usa la tool del chatbot en el header x-api-key.
   SEARCH_API_KEY: z.string().min(8, 'SEARCH_API_KEY debe tener al menos 8 caracteres'),
 
+  // Asistente de ayuda con IA (OpenAI). Opcional: si no se define, el endpoint
+  // /api/assistant responde 503 y el widget muestra un aviso.
+  OPENAI_API_KEY: z.string().optional(),
+  OPENAI_MODEL: z.string().default('gpt-4o-mini'),
+
   // Admin sembrado en el primer arranque (seed idempotente).
   ADMIN_EMAIL: z.string().email().default('admin@oriental.local'),
   ADMIN_PASSWORD: z.string().min(6).default('admin1234'),
