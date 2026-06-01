@@ -13,6 +13,10 @@ import { notFound, errorHandler } from './middleware/error';
 
 const app = express();
 
+// EasyPanel (y cualquier reverse proxy) añade el header X-Forwarded-For.
+// Sin esto, express-rate-limit lanza un error que tira el proceso.
+app.set('trust proxy', 1);
+
 // CSP desactivado: cuando el backend sirve el SPA en el mismo origen, la CSP
 // estricta por defecto de helmet bloquea los estilos en línea de Mantine.
 app.use(helmet({ contentSecurityPolicy: false }));
