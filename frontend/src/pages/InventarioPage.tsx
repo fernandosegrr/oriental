@@ -31,7 +31,7 @@ import {
   useInventory,
   useUpdateProducto,
 } from '../api/hooks';
-import type { InventoryFilters, Producto, Sucursal } from '../api/types';
+import type { InventoryFilters, Producto, Proveedor } from '../api/types';
 
 interface EditFormValues {
   descripcion: string;
@@ -48,7 +48,7 @@ const PAGE_SIZE = 20;
 export function InventarioPage() {
   const [medida, setMedida] = useState('');
   const [marca, setMarca] = useState('');
-  const [sucursal, setSucursal] = useState<Sucursal | ''>('');
+  const [proveedor, setProveedor] = useState<Proveedor | ''>('');
   const [conStock, setConStock] = useState(false);
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
@@ -62,13 +62,13 @@ export function InventarioPage() {
     () => ({
       medida: debMedida || undefined,
       marca: debMarca || undefined,
-      sucursal: sucursal || undefined,
+      proveedor: proveedor || undefined,
       conStock: conStock || undefined,
       q: debQ || undefined,
       page,
       pageSize: PAGE_SIZE,
     }),
-    [debMedida, debMarca, sucursal, conStock, debQ, page],
+    [debMedida, debMarca, proveedor, conStock, debQ, page],
   );
 
   const { data, isLoading, isError, error } = useInventory(filters);
@@ -187,15 +187,15 @@ export function InventarioPage() {
             }}
           />
           <Select
-            label="Sucursal"
+            label="Proveedor"
             data={[
-              { value: '', label: 'Todas' },
+              { value: '', label: 'Todos' },
               { value: 'LEON', label: 'LEON' },
               { value: 'DILLAMA', label: 'DILLAMA' },
             ]}
-            value={sucursal}
+            value={proveedor}
             onChange={(v) => {
-              setSucursal((v as Sucursal | '') ?? '');
+              setProveedor((v as Proveedor | '') ?? '');
               resetPage();
             }}
             allowDeselect={false}
@@ -251,7 +251,7 @@ export function InventarioPage() {
                   <Table.Th>Marca</Table.Th>
                   <Table.Th>Modelo</Table.Th>
                   <Table.Th>Specs</Table.Th>
-                  <Table.Th>Sucursal</Table.Th>
+                  <Table.Th>Proveedor</Table.Th>
                   <Table.Th>Stock</Table.Th>
                   <Table.Th>Precio venta</Table.Th>
                   <Table.Th>Acciones</Table.Th>
@@ -265,7 +265,7 @@ export function InventarioPage() {
                     <Table.Td>{p.modelo ?? '—'}</Table.Td>
                     <Table.Td>{p.specs ?? '—'}</Table.Td>
                     <Table.Td>
-                      <Badge variant="light">{p.sucursal}</Badge>
+                      <Badge variant="light">{p.proveedor}</Badge>
                     </Table.Td>
                     <Table.Td>{p.stock}</Table.Td>
                     <Table.Td>{formatMXN(p.precio_venta)}</Table.Td>
@@ -300,7 +300,7 @@ export function InventarioPage() {
               <Card key={p.id} withBorder radius="md" p="sm">
                 <Group justify="space-between" wrap="nowrap" mb={4}>
                   <Text fw={700}>{p.medida ?? '—'}</Text>
-                  <Badge variant="light">{p.sucursal}</Badge>
+                  <Badge variant="light">{p.proveedor}</Badge>
                 </Group>
                 <Text size="sm">
                   {[p.marca, p.modelo].filter(Boolean).join(' ') || '—'}

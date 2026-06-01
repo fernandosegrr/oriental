@@ -11,7 +11,7 @@ import { parseExcelBuffer } from '../lib/parseExcel';
 
 const router = Router();
 
-const SUCURSALES = ['LEON', 'DILLAMA'] as const;
+const PROVEEDORES = ['LEON', 'DILLAMA'] as const;
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -31,7 +31,7 @@ const upload = multer({
 
 interface ProductoRow {
   id: number;
-  sucursal: string;
+  proveedor: string;
   descripcion: string;
   medida: string | null;
   medida_norm: string | null;
@@ -54,11 +54,11 @@ function serialize(row: ProductoRow) {
 
 // ---------- POST /upload ----------
 const UploadBodySchema = z.object({
-  sucursal: z.enum(SUCURSALES),
+  proveedor: z.enum(PROVEEDORES),
 });
 
 const INSERT_COLUMNS = [
-  'sucursal',
+  'proveedor',
   'descripcion',
   'medida',
   'medida_norm',
@@ -76,14 +76,14 @@ router.post(
   requireAuth,
   upload.single('file'),
   asyncHandler(async (req, res) => {
-    const { sucursal } = UploadBodySchema.parse(req.body);
+    const { proveedor } = UploadBodySchema.parse(req.body);
 
     if (!req.file) {
       res.status(400).json({ error: 'Archivo requerido (.xlsx)' });
       return;
     }
 
-    const result = await parseExcelBuffer(req.file.buffer, sucursal);
+    const result = await parseExcelBuffer(req.file.buffer, proveedor);
 
     if (req.query.dryRun === 'true') {
       res.json({ stats: result.stats, sample: result.rows.slice(0, 20) });
@@ -91,7 +91,7 @@ router.post(
     }
 
     await withTransaction(async (client) => {
-      await client.query('DELETE FROM productos WHERE sucursal = $1', [sucursal]);
+      await client.query('DELETE FROM productos WHERE proveedor = $1', [proveedor]);
 
       const colCount = INSERT_COLUMNS.length;
       const batchSize = 500;
@@ -104,7 +104,7 @@ router.post(
           const ph = INSERT_COLUMNS.map((_, c) => `$${base + c + 1}`);
           placeholders.push(`(${ph.join(', ')})`);
           params.push(
-            row.sucursal,
+            row.proveedor,
             row.descripcion,
             row.medida,
             row.medida_norm,
@@ -132,7 +132,7 @@ router.post(
 const ListQuerySchema = z.object({
   medida: z.string().optional(),
   marca: z.string().optional(),
-  sucursal: z.enum(SUCURSALES).optional(),
+  proveedor: z.enum(PROVEEDORES).optional(),
   conStock: z.string().optional(),
   q: z.string().optional(),
   page: z.coerce.number().int().min(1).default(1),
@@ -143,7 +143,7 @@ router.get(
   '/',
   requireAuth,
   asyncHandler(async (req, res) => {
-    const { medida, marca, sucursal, conStock, q, page, pageSize } = ListQuerySchema.parse(
+    const { medida, marca, proveedor, conStock, q, page, pageSize } = ListQuerySchema.parse(
       req.query,
     );
 
@@ -171,9 +171,9 @@ router.get(
       params.push(marca);
       i += 1;
     }
-    if (sucursal) {
-      conditions.push(`sucursal = $${i}`);
-      params.push(sucursal);
+    if (proveedor) {
+      conditions.push(`proveedor = $${i}`);
+      params.push(proveedor);
       i += 1;
     }
     if (conStock === 'true') {
@@ -213,7 +213,7 @@ router.get(
 // ---------- POST / (alta manual) ----------
 const CreateSchema = z
   .object({
-    sucursal: z.enum(SUCURSALES),
+    proveedor: z.enum(PROVEEDORES),
     stock: z.number().int().min(0),
     precio_costo: z.number().min(0),
     descripcion: z.string().min(1).optional(),
@@ -263,11 +263,11 @@ router.post(
 
     const result = await query<ProductoRow>(
       `INSERT INTO productos
-         (sucursal, descripcion, medida, medida_norm, marca, modelo, specs, stock, precio_costo, precio_venta, origen)
+         (proveedor, descripcion, medida, medida_norm, marca, modelo, specs, stock, precio_costo, precio_venta, origen)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'manual')
        RETURNING *`,
       [
-        body.sucursal,
+        body.proveedor,
         descripcion,
         medida,
         medida_norm,
@@ -286,7 +286,7 @@ router.post(
 
 // ---------- PUT /:id ----------
 const UpdateSchema = z.object({
-  sucursal: z.enum(SUCURSALES).optional(),
+  proveedor: z.enum(PROVEEDORES).optional(),
   descripcion: z.string().optional(),
   medida: z.string().optional(),
   marca: z.string().optional(),
@@ -312,7 +312,7 @@ router.put(
       params.push(val);
     };
 
-    if (body.sucursal !== undefined) pushSet('sucursal', body.sucursal);
+    if (body.proveedor !== undefined) pushSet('proveedor', body.proveedor);
     if (body.descripcion !== undefined) pushSet('descripcion', body.descripcion);
     if (body.medida !== undefined) {
       pushSet('medida', body.medida);
@@ -359,14 +359,14 @@ router.delete(
 );
 
 // ---------- GET /search (API key, para el chatbot) ----------
+// Busca en AMBOS proveedores sin distinguirlos en la respuesta.
+// El bot recibe el inventario unificado de la tienda.
 const SearchQuerySchema = z.object({
   medida: z.string().min(1),
   marca: z.string().optional(),
-  sucursal: z.enum(SUCURSALES).optional(),
 });
 
 interface SearchRow {
-  sucursal: string;
   marca: string | null;
   modelo: string | null;
   precio_venta: number;
@@ -378,7 +378,7 @@ router.get(
   '/search',
   requireApiKey,
   asyncHandler(async (req, res) => {
-    const { medida, marca, sucursal } = SearchQuerySchema.parse(req.query);
+    const { medida, marca } = SearchQuerySchema.parse(req.query);
     const norm = normalizeMedida(medida);
 
     const buildQuery = (medidaClause: string, startIdx: number) => {
@@ -389,12 +389,8 @@ router.get(
         conditions.push(`marca ILIKE '%' || $${i++} || '%'`);
         params.push(marca);
       }
-      if (sucursal) {
-        conditions.push(`sucursal = $${i++}`);
-        params.push(sucursal);
-      }
       return {
-        text: `SELECT sucursal, marca, modelo, precio_venta, stock FROM productos
+        text: `SELECT marca, modelo, precio_venta, stock FROM productos
                WHERE ${conditions.join(' AND ')} ORDER BY precio_venta ASC`,
         params,
       };
@@ -426,7 +422,6 @@ router.get(
       medida,
       encontradas: result.rows.length > 0,
       opciones: result.rows.map((r) => ({
-        sucursal: r.sucursal,
         marca: r.marca,
         modelo: r.modelo,
         precio_venta: Number(r.precio_venta),

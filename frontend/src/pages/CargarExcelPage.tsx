@@ -22,13 +22,13 @@ import {
 import { useState } from 'react';
 import { getErrorMessage } from '../api/client';
 import { useUploadExcel } from '../api/hooks';
-import type { Sucursal, UploadResult } from '../api/types';
+import type { Proveedor, UploadResult } from '../api/types';
 
 const XLSX_MIME =
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 export function CargarExcelPage() {
-  const [sucursal, setSucursal] = useState<Sucursal | null>(null);
+  const [proveedor, setProveedor] = useState<Proveedor | null>(null);
   const [file, setFile] = useState<FileWithPath | null>(null);
   const [preview, setPreview] = useState<UploadResult | null>(null);
 
@@ -42,11 +42,11 @@ export function CargarExcelPage() {
   const handleDrop = async (files: FileWithPath[]) => {
     const dropped = files[0];
     if (!dropped) return;
-    if (!sucursal) {
+    if (!proveedor) {
       notifications.show({
         color: 'red',
-        title: 'Selecciona una sucursal',
-        message: 'Debes elegir la sucursal antes de cargar el archivo.',
+        title: 'Selecciona un proveedor',
+        message: 'Debes elegir el proveedor antes de cargar el archivo.',
       });
       return;
     }
@@ -54,7 +54,7 @@ export function CargarExcelPage() {
     try {
       const result = await uploadMut.mutateAsync({
         file: dropped,
-        sucursal,
+        proveedor,
         dryRun: true,
       });
       setPreview(result);
@@ -70,13 +70,13 @@ export function CargarExcelPage() {
   };
 
   const handleConfirm = async () => {
-    if (!file || !sucursal) return;
+    if (!file || !proveedor) return;
     try {
-      await uploadMut.mutateAsync({ file, sucursal, dryRun: false });
+      await uploadMut.mutateAsync({ file, proveedor, dryRun: false });
       notifications.show({
         color: 'green',
         title: 'Carga completada',
-        message: `Inventario de ${sucursal} reemplazado correctamente.`,
+        message: `Inventario del proveedor ${proveedor} reemplazado correctamente.`,
       });
       reset();
     } catch (err) {
@@ -97,16 +97,16 @@ export function CargarExcelPage() {
       <Title order={2}>Cargar Excel</Title>
 
       <Select
-        label="Sucursal"
+        label="Proveedor"
         placeholder="Selecciona…"
         required
         data={[
           { value: 'LEON', label: 'LEON' },
           { value: 'DILLAMA', label: 'DILLAMA' },
         ]}
-        value={sucursal}
+        value={proveedor}
         onChange={(v) => {
-          setSucursal((v as Sucursal | null) ?? null);
+          setProveedor((v as Proveedor | null) ?? null);
           reset();
         }}
         w={220}
@@ -117,7 +117,7 @@ export function CargarExcelPage() {
         accept={[XLSX_MIME]}
         maxFiles={1}
         multiple={false}
-        disabled={!sucursal || uploadMut.isPending}
+        disabled={!proveedor || uploadMut.isPending}
         loading={analyzing}
       >
         <Group
@@ -138,9 +138,9 @@ export function CargarExcelPage() {
           <div>
             <Text size="lg">Arrastra un archivo .xlsx o haz clic aquí</Text>
             <Text size="sm" c="dimmed" mt={4}>
-              {sucursal
-                ? `Sucursal seleccionada: ${sucursal}`
-                : 'Primero selecciona una sucursal'}
+              {proveedor
+                ? `Proveedor seleccionado: ${proveedor}`
+                : 'Primero selecciona un proveedor'}
             </Text>
           </div>
         </Group>
@@ -170,7 +170,7 @@ export function CargarExcelPage() {
             >
               Confirmar esta carga{' '}
               <Text span fw={700}>
-                REEMPLAZARÁ todo el inventario de {sucursal}
+                REEMPLAZARÁ todo el inventario del proveedor {proveedor}
               </Text>
               . Esta acción no se puede deshacer.
             </Alert>

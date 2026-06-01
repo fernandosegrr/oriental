@@ -3,7 +3,7 @@ import { parseDescripcion } from './parseDescripcion';
 import { calcPrecioVenta } from './price';
 
 export interface ParsedRow {
-  sucursal: string;
+  proveedor: string;
   descripcion: string;
   medida: string | null;
   medida_norm: string | null;
@@ -59,7 +59,7 @@ function coerceNumber(value: unknown): number {
  */
 export async function parseExcelBuffer(
   buffer: Buffer,
-  sucursal: string,
+  proveedor: string,
 ): Promise<ParseExcelResult> {
   const workbook = new ExcelJS.Workbook();
   // exceljs declara su propio tipo Buffer (augmentación global) que difiere del
@@ -68,14 +68,14 @@ export async function parseExcelBuffer(
 
   const hojasDisponibles = workbook.worksheets.map((ws) => ws.name);
 
-  const target = sucursal.trim().toUpperCase();
+  const target = proveedor.trim().toUpperCase();
   let sheet = workbook.worksheets.find((ws) => ws.name.trim().toUpperCase() === target);
   if (!sheet) {
     sheet = workbook.worksheets[0];
   }
   const hojaUsada = sheet ? sheet.name : '';
 
-  const sucursalNorm = sucursal.trim().toUpperCase();
+  const proveedorNorm = proveedor.trim().toUpperCase();
   const rows: ParsedRow[] = [];
 
   if (sheet) {
@@ -96,7 +96,7 @@ export async function parseExcelBuffer(
       const parsed = parseDescripcion(rawA);
 
       rows.push({
-        sucursal: sucursalNorm,
+        proveedor: proveedorNorm,
         descripcion: parsed.descripcion,
         medida: parsed.medida,
         medida_norm: parsed.medida_norm,

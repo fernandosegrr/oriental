@@ -1,10 +1,10 @@
-export type Sucursal = 'LEON' | 'DILLAMA';
+export type Proveedor = 'LEON' | 'DILLAMA';
 export type Rol = 'admin' | 'operador';
 export type Origen = 'excel' | 'manual';
 
 export interface Producto {
   id: number;
-  sucursal: Sucursal;
+  proveedor: Proveedor;
   descripcion: string;
   medida: string | null;
   medida_norm?: string | null;
@@ -38,7 +38,7 @@ export interface AuthUser {
 export interface InventoryFilters {
   medida?: string;
   marca?: string;
-  sucursal?: Sucursal | '';
+  proveedor?: Proveedor | '';
   conStock?: boolean;
   q?: string;
   page?: number;
@@ -66,7 +66,7 @@ export interface UploadResult {
 }
 
 export interface CreateProductoInput {
-  sucursal: Sucursal;
+  proveedor: Proveedor;
   descripcion?: string;
   medida?: string;
   marca?: string;
@@ -77,7 +77,7 @@ export interface CreateProductoInput {
 }
 
 export type UpdateProductoInput = Partial<{
-  sucursal: Sucursal;
+  proveedor: Proveedor;
   descripcion: string;
   medida: string;
   marca: string;

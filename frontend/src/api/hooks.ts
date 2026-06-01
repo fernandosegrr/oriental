@@ -10,7 +10,7 @@ import type {
   InventoryFilters,
   InventoryResponse,
   Producto,
-  Sucursal,
+  Proveedor,
   UpdateProductoInput,
   UpdateUsuarioInput,
   UploadResult,
@@ -29,7 +29,7 @@ export function useInventory(filters: InventoryFilters) {
       const params: Record<string, string | number | boolean> = {};
       if (filters.medida) params.medida = filters.medida;
       if (filters.marca) params.marca = filters.marca;
-      if (filters.sucursal) params.sucursal = filters.sucursal;
+      if (filters.proveedor) params.proveedor = filters.proveedor;
       if (filters.conStock) params.conStock = true;
       if (filters.q) params.q = filters.q;
       if (filters.page) params.page = filters.page;
@@ -90,12 +90,12 @@ export function useUploadExcel() {
   return useMutation({
     mutationFn: async (vars: {
       file: File;
-      sucursal: Sucursal;
+      proveedor: Proveedor;
       dryRun: boolean;
     }): Promise<UploadResult> => {
       const form = new FormData();
       form.append('file', vars.file);
-      form.append('sucursal', vars.sucursal);
+      form.append('proveedor', vars.proveedor);
       const { data } = await api.post<UploadResult>('/inventory/upload', form, {
         params: vars.dryRun ? { dryRun: true } : undefined,
         headers: { 'Content-Type': 'multipart/form-data' },
