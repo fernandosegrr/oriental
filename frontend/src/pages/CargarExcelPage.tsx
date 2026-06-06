@@ -1,11 +1,11 @@
 import {
   Alert,
   Button,
+  Card,
   Center,
   Group,
   Loader,
   Paper,
-  Select,
   Stack,
   Table,
   Text,
@@ -27,8 +27,9 @@ import type { Proveedor, UploadResult } from '../api/types';
 const XLSX_MIME =
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
+const PROVEEDOR: Proveedor = 'LLANTERO_OFICIAL';
+
 export function CargarExcelPage() {
-  const [proveedor, setProveedor] = useState<Proveedor | null>(null);
   const [file, setFile] = useState<FileWithPath | null>(null);
   const [preview, setPreview] = useState<UploadResult | null>(null);
 
@@ -42,19 +43,11 @@ export function CargarExcelPage() {
   const handleDrop = async (files: FileWithPath[]) => {
     const dropped = files[0];
     if (!dropped) return;
-    if (!proveedor) {
-      notifications.show({
-        color: 'red',
-        title: 'Selecciona un proveedor',
-        message: 'Debes elegir el proveedor antes de cargar el archivo.',
-      });
-      return;
-    }
     setFile(dropped);
     try {
       const result = await uploadMut.mutateAsync({
         file: dropped,
-        proveedor,
+        proveedor: PROVEEDOR,
         dryRun: true,
       });
       setPreview(result);
@@ -70,13 +63,13 @@ export function CargarExcelPage() {
   };
 
   const handleConfirm = async () => {
-    if (!file || !proveedor) return;
+    if (!file) return;
     try {
-      await uploadMut.mutateAsync({ file, proveedor, dryRun: false });
+      await uploadMut.mutateAsync({ file, proveedor: PROVEEDOR, dryRun: false });
       notifications.show({
         color: 'green',
         title: 'Carga completada',
-        message: `Inventario del proveedor ${proveedor} reemplazado correctamente.`,
+        message: 'Inventario de Llantero Oficial reemplazado correctamente.',
       });
       reset();
     } catch (err) {
@@ -96,28 +89,12 @@ export function CargarExcelPage() {
     <Stack maw={760}>
       <Title order={2}>Cargar Excel</Title>
 
-      <Select
-        label="Proveedor"
-        placeholder="Selecciona…"
-        required
-        data={[
-          { value: 'LEON', label: 'LEON' },
-          { value: 'DILLAMA', label: 'DILLAMA' },
-        ]}
-        value={proveedor}
-        onChange={(v) => {
-          setProveedor((v as Proveedor | null) ?? null);
-          reset();
-        }}
-        w={220}
-      />
-
       <Dropzone
         onDrop={handleDrop}
         accept={[XLSX_MIME]}
         maxFiles={1}
         multiple={false}
-        disabled={!proveedor || uploadMut.isPending}
+        disabled={uploadMut.isPending}
         loading={analyzing}
       >
         <Group
@@ -136,11 +113,9 @@ export function CargarExcelPage() {
             <IconFileSpreadsheet size={48} />
           </Dropzone.Idle>
           <div>
-            <Text size="lg">Arrastra un archivo .xlsx o haz clic aquí</Text>
+            <Text size="lg">Arrastra el archivo .xlsx de Llantero Oficial</Text>
             <Text size="sm" c="dimmed" mt={4}>
-              {proveedor
-                ? `Proveedor seleccionado: ${proveedor}`
-                : 'Primero selecciona un proveedor'}
+              o haz clic aquí para seleccionarlo
             </Text>
           </div>
         </Group>
@@ -170,32 +145,55 @@ export function CargarExcelPage() {
             >
               Confirmar esta carga{' '}
               <Text span fw={700}>
-                REEMPLAZARÁ todo el inventario del proveedor {proveedor}
+                REEMPLAZARÁ todo el inventario de Llantero Oficial
               </Text>
               . Esta acción no se puede deshacer.
             </Alert>
 
             {sample.length > 0 && (
-                <Table withTableBorder withColumnBorders>
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>Medida</Table.Th>
-                      <Table.Th>Marca</Table.Th>
-                      <Table.Th>Modelo</Table.Th>
-                      <Table.Th>Stock</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {sample.slice(0, 5).map((p, i) => (
-                      <Table.Tr key={p.id ?? i}>
-                        <Table.Td>{p.medida ?? '—'}</Table.Td>
-                        <Table.Td>{p.marca ?? '—'}</Table.Td>
-                        <Table.Td>{p.modelo ?? '—'}</Table.Td>
-                        <Table.Td>{p.stock}</Table.Td>
+              <>
+                {/* Pantallas medianas+: tabla */}
+                <Paper withBorder radius="sm" visibleFrom="sm">
+                  <Table withTableBorder withColumnBorders>
+                    <Table.Thead>
+                      <Table.Tr>
+                        <Table.Th>Medida</Table.Th>
+                        <Table.Th>Marca</Table.Th>
+                        <Table.Th>Modelo</Table.Th>
+                        <Table.Th>Stock</Table.Th>
                       </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
+                    </Table.Thead>
+                    <Table.Tbody>
+                      {sample.slice(0, 5).map((p, i) => (
+                        <Table.Tr key={p.id ?? i}>
+                          <Table.Td>{p.medida ?? '—'}</Table.Td>
+                          <Table.Td>{p.marca ?? '—'}</Table.Td>
+                          <Table.Td>{p.modelo ?? '—'}</Table.Td>
+                          <Table.Td>{p.stock}</Table.Td>
+                        </Table.Tr>
+                      ))}
+                    </Table.Tbody>
+                  </Table>
+                </Paper>
+
+                {/* Móvil: tarjetas */}
+                <Stack hiddenFrom="sm" gap="xs">
+                  {sample.slice(0, 5).map((p, i) => (
+                    <Card key={p.id ?? i} withBorder radius="md" p="sm">
+                      <Text fw={700}>{p.medida ?? '—'}</Text>
+                      <Text size="sm">
+                        {[p.marca, p.modelo].filter(Boolean).join(' ') || '—'}
+                      </Text>
+                      <Text size="sm" mt={4}>
+                        Stock:{' '}
+                        <Text span fw={600}>
+                          {p.stock}
+                        </Text>
+                      </Text>
+                    </Card>
+                  ))}
+                </Stack>
+              </>
             )}
 
             <Group justify="flex-end">

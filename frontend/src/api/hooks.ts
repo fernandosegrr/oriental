@@ -29,7 +29,6 @@ export function useInventory(filters: InventoryFilters) {
       const params: Record<string, string | number | boolean> = {};
       if (filters.medida) params.medida = filters.medida;
       if (filters.marca) params.marca = filters.marca;
-      if (filters.proveedor) params.proveedor = filters.proveedor;
       if (filters.conStock) params.conStock = true;
       if (filters.q) params.q = filters.q;
       if (filters.page) params.page = filters.page;

@@ -3,7 +3,6 @@ import {
   Group,
   NumberInput,
   Paper,
-  Select,
   Stack,
   Tabs,
   Text,
@@ -16,12 +15,11 @@ import { useState } from 'react';
 import { getErrorMessage } from '../api/client';
 import { calcPrecioVenta, formatMXN } from '../api/format';
 import { useCreateProducto } from '../api/hooks';
-import type { CreateProductoInput, Proveedor } from '../api/types';
+import type { CreateProductoInput } from '../api/types';
 
 type Mode = 'descripcion' | 'estructurado';
 
 interface FormValues {
-  proveedor: Proveedor | null;
   descripcion: string;
   medida: string;
   marca: string;
@@ -37,7 +35,6 @@ export function AgregarProductoPage() {
 
   const form = useForm<FormValues>({
     initialValues: {
-      proveedor: null,
       descripcion: '',
       medida: '',
       marca: '',
@@ -47,7 +44,6 @@ export function AgregarProductoPage() {
       precio_costo: 0,
     },
     validate: {
-      proveedor: (v) => (v ? null : 'Selecciona un proveedor'),
       descripcion: (v, values) =>
         mode === 'descripcion' && !v.trim()
           ? 'Ingresa la descripción'
@@ -60,8 +56,6 @@ export function AgregarProductoPage() {
   const previewVenta = calcPrecioVenta(form.values.precio_costo);
 
   const handleSubmit = async (values: FormValues) => {
-    if (!values.proveedor) return;
-
     // In structured mode require at least a medida so the row is meaningful.
     if (mode === 'estructurado' && !values.medida.trim()) {
       form.setFieldError('medida', 'Ingresa al menos la medida');
@@ -69,7 +63,7 @@ export function AgregarProductoPage() {
     }
 
     const input: CreateProductoInput = {
-      proveedor: values.proveedor,
+      proveedor: 'LLANTERO_OFICIAL',
       stock: values.stock,
       precio_costo: values.precio_costo,
     };
@@ -86,9 +80,7 @@ export function AgregarProductoPage() {
     try {
       await createMut.mutateAsync(input);
       notifications.show({ color: 'green', message: 'Producto agregado' });
-      const keepProveedor = values.proveedor;
       form.reset();
-      form.setFieldValue('proveedor', keepProveedor);
     } catch (err) {
       notifications.show({
         color: 'red',
@@ -105,18 +97,6 @@ export function AgregarProductoPage() {
       <Paper withBorder p="md" radius="md">
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack>
-            <Select
-              label="Proveedor"
-              placeholder="Selecciona…"
-              required
-              data={[
-                { value: 'LEON', label: 'LEON' },
-                { value: 'DILLAMA', label: 'DILLAMA' },
-              ]}
-              {...form.getInputProps('proveedor')}
-              w={220}
-            />
-
             <Tabs value={mode} onChange={(v) => setMode((v as Mode) ?? 'descripcion')}>
               <Tabs.List>
                 <Tabs.Tab value="descripcion">Descripción completa</Tabs.Tab>

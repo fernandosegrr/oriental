@@ -11,7 +11,7 @@ import { parseExcelBuffer } from '../lib/parseExcel';
 
 const router = Router();
 
-const PROVEEDORES = ['LEON', 'DILLAMA'] as const;
+const PROVEEDORES = ['LLANTERO_OFICIAL'] as const;
 
 const upload = multer({
   storage: multer.memoryStorage(),

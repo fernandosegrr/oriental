@@ -1,4 +1,4 @@
-export type Proveedor = 'LEON' | 'DILLAMA';
+export type Proveedor = 'LLANTERO_OFICIAL';
 export type Rol = 'admin' | 'operador';
 export type Origen = 'excel' | 'manual';
 
@@ -38,7 +38,6 @@ export interface AuthUser {
 export interface InventoryFilters {
   medida?: string;
   marca?: string;
-  proveedor?: Proveedor | '';
   conStock?: boolean;
   q?: string;
   page?: number;
