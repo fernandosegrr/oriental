@@ -89,7 +89,7 @@ export async function parseExcelBuffer(
         continue;
       }
 
-      const precio_venta = Math.round(coerceNumber(row.getCell(2).value));
+      const precio_venta = coerceNumber(row.getCell(2).value);
       const precio_costo = coerceNumber(row.getCell(3).value);
       const stock = 0;
 

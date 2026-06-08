@@ -34,7 +34,7 @@ Qué hace el sistema:
 - Precios: el Excel trae directamente el precio de venta (columna B, PRECIO DE LISTA) y el costo (columna C, PRECIO 20% DESC.). No se aplica fórmula de margen al importar.
 - Proveedor: el inventario proviene de un único proveedor llamado Llantero Oficial. La carga de Excel reemplaza todo el catálogo.
 - Usuarios: solo el rol admin administra usuarios (crear admin/operador, editar, desactivar). Para cambiar tu contraseña, edita tu propio usuario.
-- Chatbot de WhatsApp: consulta el inventario de la tienda por el endpoint /api/inventory/search (con API key) y obtiene marca, modelo y precio de venta de llantas disponibles.
+- Chatbot de WhatsApp: consulta el inventario de la tienda por el endpoint /api/inventory/search (con API key) y obtiene marca, modelo, precio_lista (PRECIO DE LISTA) y precio_descuento (precio con 20% de descuento) de cada llanta.
 
 No inventes funciones que no existan. Si no sabes algo, dilo.`;
 

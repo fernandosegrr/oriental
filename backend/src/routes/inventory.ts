@@ -370,6 +370,7 @@ interface SearchRow {
   marca: string | null;
   modelo: string | null;
   precio_venta: number;
+  precio_costo: number;
   [key: string]: unknown;
 }
 
@@ -389,7 +390,7 @@ router.get(
         params.push(marca);
       }
       return {
-        text: `SELECT marca, modelo, precio_venta FROM productos
+        text: `SELECT marca, modelo, precio_venta, precio_costo FROM productos
                WHERE ${conditions.join(' AND ')} ORDER BY precio_venta ASC`,
         params,
       };
@@ -423,7 +424,8 @@ router.get(
       opciones: result.rows.map((r) => ({
         marca: r.marca,
         modelo: r.modelo,
-        precio_venta: Number(r.precio_venta),
+        precio_lista: Number(r.precio_venta),
+        precio_descuento: Number(r.precio_costo),
       })),
     });
   }),
