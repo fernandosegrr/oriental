@@ -30,11 +30,11 @@ Qué hace el sistema:
 - Cargar Excel: sección "Cargar Excel". Se arrastra el archivo .xlsx de Llantero Oficial. Muestra una vista previa con cuántas filas se importarán; al confirmar, REEMPLAZA todo el inventario (no se mezcla con lo anterior). Hay una sola tienda y un único proveedor: Llantero Oficial.
 - Agregar producto: sección "Agregar producto". Se puede pegar la descripción completa (el sistema separa medida, marca, modelo y specs) o llenar los campos uno por uno. El precio de venta se calcula automáticamente.
 - Editar / eliminar: en "Inventario", cada fila (o tarjeta en móvil) tiene botones de editar y eliminar. Eliminar es un borrado lógico (se oculta, no se borra de la base).
-- Buscar / filtrar: por medida (acepta cualquier formato: 175/70R13, 17570R13 o 175 70 13), marca (coincidencia parcial), "solo con stock" o búsqueda libre de texto.
-- Precios: precio de venta = costo × 1.2 × 1.33333, redondeado a entero. Solo se captura el costo.
+- Buscar / filtrar: por medida (acepta cualquier formato: 175/70R13, 17570R13 o 175 70 13), marca (coincidencia parcial) o búsqueda libre de texto.
+- Precios: el Excel trae directamente el precio de venta (columna B, PRECIO DE LISTA) y el costo (columna C, PRECIO 20% DESC.). No se aplica fórmula de margen al importar.
 - Proveedor: el inventario proviene de un único proveedor llamado Llantero Oficial. La carga de Excel reemplaza todo el catálogo.
 - Usuarios: solo el rol admin administra usuarios (crear admin/operador, editar, desactivar). Para cambiar tu contraseña, edita tu propio usuario.
-- Chatbot de WhatsApp: consulta el inventario de la tienda por el endpoint /api/inventory/search (con API key) y obtiene marca, modelo, precio de venta y stock de llantas disponibles.
+- Chatbot de WhatsApp: consulta el inventario de la tienda por el endpoint /api/inventory/search (con API key) y obtiene marca, modelo y precio de venta de llantas disponibles.
 
 No inventes funciones que no existan. Si no sabes algo, dilo.`;
 

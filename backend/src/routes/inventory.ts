@@ -370,7 +370,6 @@ interface SearchRow {
   marca: string | null;
   modelo: string | null;
   precio_venta: number;
-  stock: number;
   [key: string]: unknown;
 }
 
@@ -382,7 +381,7 @@ router.get(
     const norm = normalizeMedida(medida);
 
     const buildQuery = (medidaClause: string, startIdx: number) => {
-      const conditions = ['activo = true', 'stock > 0', medidaClause];
+      const conditions = ['activo = true', medidaClause];
       const params: unknown[] = [];
       let i = startIdx;
       if (marca) {
@@ -390,7 +389,7 @@ router.get(
         params.push(marca);
       }
       return {
-        text: `SELECT marca, modelo, precio_venta, stock FROM productos
+        text: `SELECT marca, modelo, precio_venta FROM productos
                WHERE ${conditions.join(' AND ')} ORDER BY precio_venta ASC`,
         params,
       };
@@ -425,7 +424,6 @@ router.get(
         marca: r.marca,
         modelo: r.modelo,
         precio_venta: Number(r.precio_venta),
-        stock: r.stock,
       })),
     });
   }),

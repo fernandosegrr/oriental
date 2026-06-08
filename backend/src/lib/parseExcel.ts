@@ -1,6 +1,5 @@
 import ExcelJS from 'exceljs';
 import { parseDescripcion } from './parseDescripcion';
-import { calcPrecioVenta } from './price';
 
 export interface ParsedRow {
   proveedor: string;
@@ -54,8 +53,9 @@ function coerceNumber(value: unknown): number {
 
 /**
  * Lee un Buffer de Excel en memoria y devuelve filas parseadas + estadísticas.
- * Los datos comienzan en la FILA 3 (fila 1 = encabezados, fila 2 = multiplicadores).
- * Columnas: A = descripción, B = stock, C = precio_costo. El resto se ignora.
+ * Los datos comienzan en la FILA 3 (fila 1 = encabezados, fila 2 = vacía/multiplicadores).
+ * Columnas: A = descripción, B = precio_venta (PRECIO DE LISTA), C = precio_costo (PRECIO 20% DESC.).
+ * El Excel de mayoreo no incluye stock; se guarda como 0.
  */
 export async function parseExcelBuffer(
   buffer: Buffer,
@@ -89,9 +89,9 @@ export async function parseExcelBuffer(
         continue;
       }
 
-      const stock = Math.trunc(coerceNumber(row.getCell(2).value));
+      const precio_venta = coerceNumber(row.getCell(2).value);
       const precio_costo = coerceNumber(row.getCell(3).value);
-      const precio_venta = calcPrecioVenta(precio_costo);
+      const stock = 0;
 
       const parsed = parseDescripcion(rawA);
 
