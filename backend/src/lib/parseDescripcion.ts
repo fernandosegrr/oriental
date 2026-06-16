@@ -12,7 +12,12 @@ export function normalizeMedida(s: string): string {
     // llantas de flotación (formato NNxWW.DDRrr, separador X).
     // Ejemplo: 27X8.50R14 → 27X8.5R14   31X10.50R15 → 31X10.5R15
     .replace(/(X\d+\.\d*[1-9])0+/g, '$1')
-    .replace(/[^A-Z0-9.]/g, '');
+    .replace(/[^A-Z0-9.]/g, '')
+    // Quita el prefijo de tipo de llanta (LT / P / ST) si aparece pegado al
+    // número.  parseDescripcion ya lo descarta al parsear el Excel, por lo que
+    // sin este paso las búsquedas con prefijo ("LT195R15", "P175/70R13")
+    // producen una norma diferente a la almacenada y no encuentran nada.
+    .replace(/^(LT|ST|P)(?=\d)/, '');
 }
 
 export interface ParsedDescripcion {
