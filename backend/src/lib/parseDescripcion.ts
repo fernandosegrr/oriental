@@ -1,9 +1,18 @@
 /**
  * Normaliza una medida de llanta para indexado/búsqueda:
- * mayúsculas y solo se conservan A-Z, 0-9 y el punto decimal.
+ * mayúsculas, solo A-Z/0-9/punto, y sin ceros decimales superfluos en
+ * llantas de flotación (27X8.50R14 → 27X8.5R14, 31X10.50R15 → 31X10.5R15).
+ * Los ceros en tamaños bias (7.0014) se conservan para que el fallback
+ * de solo-dígitos siga encontrando "700-14".
  */
 export function normalizeMedida(s: string): string {
-  return (s || '').toUpperCase().replace(/[^A-Z0-9.]/g, '');
+  return (s || '')
+    .toUpperCase()
+    // Elimina ceros decimales superfluos SOLO en el segmento de ancho de
+    // llantas de flotación (formato NNxWW.DDRrr, separador X).
+    // Ejemplo: 27X8.50R14 → 27X8.5R14   31X10.50R15 → 31X10.5R15
+    .replace(/(X\d+\.\d*[1-9])0+/g, '$1')
+    .replace(/[^A-Z0-9.]/g, '');
 }
 
 export interface ParsedDescripcion {

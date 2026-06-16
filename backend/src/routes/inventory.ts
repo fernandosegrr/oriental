@@ -164,6 +164,16 @@ router.get(
         params.push(dig);
         i += 1;
       }
+      // 4.° fallback: flotación con cero decimal superfluo (27X8.5R14 ↔ 27X8.50R14).
+      // Aplica solo cuando la medida normalizada contiene X y punto (formato flotación).
+      if (norm.includes('X') && norm.includes('.')) {
+        const normFloat = norm.replace(/(X\d+\.\d*[1-9])0+/g, '$1');
+        ors.push(
+          `regexp_replace(medida_norm, '(X\\d+\\.\\d*[1-9])0+', '\\1', 'g') = $${i}`,
+        );
+        params.push(normFloat);
+        i += 1;
+      }
       conditions.push(`(${ors.join(' OR ')})`);
     }
     if (marca) {
@@ -364,6 +374,9 @@ router.delete(
 const SearchQuerySchema = z.object({
   medida: z.string().min(1),
   marca: z.string().optional(),
+  // q: búsqueda libre en descripción; se usa como último recurso cuando
+  // ninguna estrategia por medida encuentra resultados.
+  q: z.string().optional(),
 });
 
 interface SearchRow {
@@ -378,7 +391,7 @@ router.get(
   '/search',
   requireApiKey,
   asyncHandler(async (req, res) => {
-    const { medida, marca } = SearchQuerySchema.parse(req.query);
+    const { medida, marca, q } = SearchQuerySchema.parse(req.query);
     const norm = normalizeMedida(medida);
 
     const buildQuery = (medidaClause: string, startIdx: number) => {
@@ -416,6 +429,35 @@ router.get(
         );
         result = await query<SearchRow>(byDigits.text, [dig, ...byDigits.params]);
       }
+    }
+
+    // Fallback por flotación con cero decimal superfluo (27X8.5R14 ↔ 27X8.50R14).
+    // Cubre datos cargados antes de la migración 005.
+    if (result.rows.length === 0 && norm.includes('X') && norm.includes('.')) {
+      const normFloat = norm.replace(/(X\d+\.\d*[1-9])0+/g, '$1');
+      const byFloat = buildQuery(
+        `regexp_replace(medida_norm, '(X\\d+\\.\\d*[1-9])0+', '\\1', 'g') = $1`,
+        2,
+      );
+      result = await query<SearchRow>(byFloat.text, [normFloat, ...byFloat.params]);
+    }
+
+    // Último recurso: búsqueda libre en la descripción completa (parámetro q).
+    // Útil cuando el bot conoce el modelo popular pero no la medida exacta.
+    if (result.rows.length === 0 && q) {
+      let qi = 1;
+      const qConds = ['activo = true', `descripcion ILIKE '%' || $${qi++} || '%'`];
+      const qParams: unknown[] = [q];
+      if (marca) {
+        qConds.push(`marca ILIKE '%' || $${qi++} || '%'`);
+        qParams.push(marca);
+      }
+      const textResult = await query<SearchRow>(
+        `SELECT marca, modelo, precio_venta, precio_costo FROM productos
+         WHERE ${qConds.join(' AND ')} ORDER BY precio_venta ASC`,
+        qParams,
+      );
+      result = textResult;
     }
 
     res.json({
