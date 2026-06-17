@@ -18,6 +18,7 @@ export function notFound(_req: Request, res: Response): void {
 
 interface HttpError extends Error {
   status?: number;
+  detalles?: unknown;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -31,7 +32,10 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
 
   const e = err as HttpError;
   if (typeof e?.status === 'number') {
-    res.status(e.status).json({ error: e.message });
+    res.status(e.status).json({
+      error: e.message,
+      ...(e.detalles !== undefined ? { detalles: e.detalles } : {}),
+    });
     return;
   }
 

@@ -38,3 +38,19 @@ export function getErrorMessage(err: unknown, fallback = 'Ocurrió un error'): s
   if (err instanceof Error) return err.message;
   return fallback;
 }
+
+export interface FormatoExcelDetalles {
+  formatosAceptados: { nombre: string; columnas: string[] }[];
+  ejemploFila: { descripcion: string; precioLista: number; precio25Desc: number };
+}
+
+/** Extrae el campo `detalles` del cuerpo de error cuando el servidor lo incluye. */
+export function getErrorDetalles(err: unknown): FormatoExcelDetalles | null {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as { detalles?: unknown } | undefined;
+    if (data?.detalles && typeof data.detalles === 'object') {
+      return data.detalles as FormatoExcelDetalles;
+    }
+  }
+  return null;
+}
