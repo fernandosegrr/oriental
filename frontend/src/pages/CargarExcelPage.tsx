@@ -3,7 +3,6 @@ import {
   Badge,
   Button,
   Card,
-  Center,
   Code,
   Group,
   List,
@@ -183,42 +182,45 @@ export function CargarExcelPage() {
     <Stack maw={760}>
       <Title order={2}>Cargar Excel</Title>
 
-      <Dropzone
-        onDrop={handleDrop}
-        accept={[XLSX_MIME]}
-        maxFiles={1}
-        multiple={false}
-        disabled={uploadMut.isPending}
-        loading={analyzing}
-      >
-        <Group
-          justify="center"
-          gap="xl"
-          mih={140}
-          style={{ pointerEvents: 'none' }}
-        >
-          <Dropzone.Accept>
-            <IconUpload size={48} />
-          </Dropzone.Accept>
-          <Dropzone.Reject>
-            <IconX size={48} />
-          </Dropzone.Reject>
-          <Dropzone.Idle>
-            <IconFileSpreadsheet size={48} />
-          </Dropzone.Idle>
-          <div>
-            <Text size="lg">Arrastra el archivo .xlsx de Llantero Oficial</Text>
-            <Text size="sm" c="dimmed" mt={4}>
-              o haz clic aquí para seleccionarlo
-            </Text>
-          </div>
-        </Group>
-      </Dropzone>
-
-      {analyzing && (
-        <Center>
-          <Loader size="sm" />
-        </Center>
+      {!stats && !formatoError && (
+        <>
+          <Dropzone
+            onDrop={handleDrop}
+            accept={[XLSX_MIME]}
+            maxFiles={1}
+            multiple={false}
+            disabled={uploadMut.isPending}
+          >
+            <Group
+              justify="center"
+              gap="xl"
+              mih={140}
+              style={{ pointerEvents: 'none' }}
+            >
+              <Dropzone.Accept>
+                <IconUpload size={48} />
+              </Dropzone.Accept>
+              <Dropzone.Reject>
+                <IconX size={48} />
+              </Dropzone.Reject>
+              <Dropzone.Idle>
+                {analyzing ? <Loader size={48} /> : <IconFileSpreadsheet size={48} />}
+              </Dropzone.Idle>
+              <div>
+                {analyzing ? (
+                  <Text size="lg" c="dimmed">Analizando archivo…</Text>
+                ) : (
+                  <>
+                    <Text size="lg">Arrastra el archivo .xlsx de Llantero Oficial</Text>
+                    <Text size="sm" c="dimmed" mt={4}>
+                      o haz clic aquí para seleccionarlo
+                    </Text>
+                  </>
+                )}
+              </div>
+            </Group>
+          </Dropzone>
+        </>
       )}
 
       {/* Error de formato no reconocido */}
