@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AgregarProductoPage } from './pages/AgregarProductoPage';
+import { AuditoriaPage } from './pages/AuditoriaPage';
 import { CargarExcelPage } from './pages/CargarExcelPage';
 import { InventarioPage } from './pages/InventarioPage';
 import { LoginPage } from './pages/LoginPage';
@@ -48,6 +49,16 @@ export default function App() {
           <ProtectedRoute adminOnly>
             <Layout>
               <UsuariosPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/auditoria"
+        element={
+          <ProtectedRoute adminOnly>
+            <Layout>
+              <AuditoriaPage />
             </Layout>
           </ProtectedRoute>
         }

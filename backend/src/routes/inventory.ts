@@ -8,6 +8,7 @@ import { requireApiKey } from '../middleware/apiKey';
 import { calcPrecioVenta } from '../lib/price';
 import { parseDescripcion, normalizeMedida } from '../lib/parseDescripcion';
 import { parseExcelBuffer } from '../lib/parseExcel';
+import { logEvento } from '../lib/audit';
 
 const router = Router();
 
@@ -122,6 +123,14 @@ router.post(
           params,
         );
       }
+    });
+
+    logEvento('excel_carga', req.user!.id, req.user!.email, {
+      proveedor,
+      total: result.stats.total,
+      con_medida: result.stats.conMedida,
+      sin_medida: result.stats.sinMedida,
+      hoja: result.stats.hojaUsada,
     });
 
     res.json({ stats: result.stats });
@@ -368,6 +377,60 @@ router.delete(
   }),
 );
 
+// ---------- GET /audit-logs (admin, actividad del sistema) ----------
+const AuditLogsQuerySchema = z.object({
+  tipo: z.string().optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(50),
+});
+
+router.get(
+  '/audit-logs',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const { tipo, from, to, page, pageSize } = AuditLogsQuerySchema.parse(req.query);
+
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    let i = 1;
+
+    if (tipo) {
+      conditions.push(`tipo = $${i++}`);
+      params.push(tipo);
+    }
+    if (from) {
+      conditions.push(`evento_at >= $${i++}`);
+      params.push(from);
+    }
+    if (to) {
+      conditions.push(`evento_at <= $${i++}`);
+      params.push(to);
+    }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const countResult = await query<{ count: string }>(
+      `SELECT COUNT(*)::int AS count FROM audit_logs ${where}`,
+      params,
+    );
+    const total = Number(countResult.rows[0].count);
+
+    const limitPh = i;
+    const offsetPh = i + 1;
+    const itemsResult = await query(
+      `SELECT id, evento_at, tipo, usuario_id, usuario_email, detalle
+       FROM audit_logs ${where}
+       ORDER BY evento_at DESC
+       LIMIT $${limitPh} OFFSET $${offsetPh}`,
+      [...params, pageSize, (page - 1) * pageSize],
+    );
+
+    res.json({ items: itemsResult.rows, total, page, pageSize });
+  }),
+);
+
 // ---------- GET /search (API key, para el chatbot) ----------
 // Busca en AMBOS proveedores sin distinguirlos en la respuesta.
 // El bot recibe el inventario unificado de la tienda.
@@ -386,6 +449,62 @@ interface SearchRow {
   precio_costo: number;
   [key: string]: unknown;
 }
+
+// ---------- GET /search-logs (admin, auditoría del bot) ----------
+const SearchLogsQuerySchema = z.object({
+  medida: z.string().optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(50),
+});
+
+router.get(
+  '/search-logs',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const { medida, from, to, page, pageSize } = SearchLogsQuerySchema.parse(req.query);
+
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    let i = 1;
+
+    if (medida) {
+      const norm = normalizeMedida(medida);
+      conditions.push(`medida_norm ILIKE '%' || $${i++} || '%'`);
+      params.push(norm);
+    }
+    if (from) {
+      conditions.push(`consultado_at >= $${i++}`);
+      params.push(from);
+    }
+    if (to) {
+      conditions.push(`consultado_at <= $${i++}`);
+      params.push(to);
+    }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const countResult = await query<{ count: string }>(
+      `SELECT COUNT(*)::int AS count FROM bot_search_logs ${where}`,
+      params,
+    );
+    const total = Number(countResult.rows[0].count);
+
+    const limitPh = i;
+    const offsetPh = i + 1;
+    const itemsResult = await query(
+      `SELECT id, consultado_at, medida, medida_norm, marca, q, estrategia,
+              total_resultados, opciones
+       FROM bot_search_logs ${where}
+       ORDER BY consultado_at DESC
+       LIMIT $${limitPh} OFFSET $${offsetPh}`,
+      [...params, pageSize, (page - 1) * pageSize],
+    );
+
+    res.json({ items: itemsResult.rows, total, page, pageSize });
+  }),
+);
 
 router.get(
   '/search',
@@ -409,14 +528,18 @@ router.get(
       };
     };
 
+    let estrategia = 'sin_resultado';
+
     // Intento exacto.
     const exact = buildQuery('medida_norm = $1', 2);
     let result = await query<SearchRow>(exact.text, [norm, ...exact.params]);
+    if (result.rows.length > 0) estrategia = 'exacta';
 
     // Fallback por prefijo.
     if (result.rows.length === 0) {
       const fuzzy = buildQuery('medida_norm LIKE $1', 2);
       result = await query<SearchRow>(fuzzy.text, [norm + '%', ...fuzzy.params]);
+      if (result.rows.length > 0) estrategia = 'prefijo';
     }
 
     // Fallback por solo-dígitos (ignora R/ZR, barras, espacios).
@@ -428,6 +551,7 @@ router.get(
           2,
         );
         result = await query<SearchRow>(byDigits.text, [dig, ...byDigits.params]);
+        if (result.rows.length > 0) estrategia = 'digitos';
       }
     }
 
@@ -440,6 +564,7 @@ router.get(
         2,
       );
       result = await query<SearchRow>(byFloat.text, [normFloat, ...byFloat.params]);
+      if (result.rows.length > 0) estrategia = 'flotacion';
     }
 
     // Último recurso: búsqueda libre en la descripción completa (parámetro q).
@@ -458,17 +583,28 @@ router.get(
         qParams,
       );
       result = textResult;
+      if (result.rows.length > 0) estrategia = 'texto_libre';
     }
+
+    const opciones = result.rows.map((r) => ({
+      marca: r.marca,
+      modelo: r.modelo,
+      precio_lista: Number(r.precio_venta),
+      precio_descuento: Number(r.precio_costo),
+    }));
+
+    // Log fire-and-forget: nunca retrasa ni rompe la respuesta al bot.
+    query(
+      `INSERT INTO bot_search_logs
+         (medida, medida_norm, marca, q, estrategia, total_resultados, opciones)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [medida, norm, marca ?? null, q ?? null, estrategia, opciones.length, JSON.stringify(opciones)],
+    ).catch(() => {});
 
     res.json({
       medida,
-      encontradas: result.rows.length > 0,
-      opciones: result.rows.map((r) => ({
-        marca: r.marca,
-        modelo: r.modelo,
-        precio_lista: Number(r.precio_venta),
-        precio_descuento: Number(r.precio_costo),
-      })),
+      encontradas: opciones.length > 0,
+      opciones,
     });
   }),
 );

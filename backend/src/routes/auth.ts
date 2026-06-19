@@ -7,6 +7,7 @@ import { env } from '../env';
 import { query } from '../db';
 import { asyncHandler } from '../middleware/error';
 import { requireAuth } from '../middleware/auth';
+import { logEvento } from '../lib/audit';
 
 const router = Router();
 
@@ -43,12 +44,14 @@ router.post(
     const user = result.rows[0];
 
     if (!user) {
+      logEvento('login_fallo', null, email);
       res.status(401).json({ error: 'Credenciales inválidas' });
       return;
     }
 
     const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) {
+      logEvento('login_fallo', null, email);
       res.status(401).json({ error: 'Credenciales inválidas' });
       return;
     }
@@ -65,6 +68,8 @@ router.post(
       secure: env.COOKIE_SECURE,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+
+    logEvento('login_ok', user.id, user.email);
 
     res.json({
       user: { id: user.id, email: user.email, nombre: user.nombre, rol: user.rol },

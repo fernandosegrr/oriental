@@ -5,12 +5,18 @@ import {
 } from '@tanstack/react-query';
 import { api } from './client';
 import type {
+  AuditLog,
+  AuditLogsFilters,
+  AuditLogsResponse,
+  BotSearchLog,
   CreateProductoInput,
   CreateUsuarioInput,
   InventoryFilters,
   InventoryResponse,
   Producto,
   Proveedor,
+  SearchLogsFilters,
+  SearchLogsResponse,
   UpdateProductoInput,
   UpdateUsuarioInput,
   UploadResult,
@@ -19,6 +25,7 @@ import type {
 
 const INVENTORY_KEY = 'inventory';
 const USERS_KEY = 'users';
+const SEARCH_LOGS_KEY = 'search-logs';
 
 /* ------------------------------- Inventory ------------------------------- */
 
@@ -107,6 +114,47 @@ export function useUploadExcel() {
         void qc.invalidateQueries({ queryKey: [INVENTORY_KEY] });
       }
     },
+  });
+}
+
+/* ----------------------------- Search Logs ------------------------------- */
+
+export function useSearchLogs(filters: SearchLogsFilters) {
+  return useQuery({
+    queryKey: [SEARCH_LOGS_KEY, filters],
+    queryFn: async (): Promise<SearchLogsResponse> => {
+      const params: Record<string, string | number> = {};
+      if (filters.medida) params.medida = filters.medida;
+      if (filters.from) params.from = filters.from;
+      if (filters.to) params.to = filters.to;
+      if (filters.page) params.page = filters.page;
+      if (filters.pageSize) params.pageSize = filters.pageSize;
+      const { data } = await api.get<SearchLogsResponse>('/inventory/search-logs', { params });
+      return data;
+    },
+    placeholderData: (prev) => prev,
+  });
+}
+
+// Suppress unused-import warning until the type is used elsewhere.
+export type { BotSearchLog, AuditLog };
+
+const AUDIT_LOGS_KEY = 'audit-logs';
+
+export function useAuditLogs(filters: AuditLogsFilters) {
+  return useQuery({
+    queryKey: [AUDIT_LOGS_KEY, filters],
+    queryFn: async (): Promise<AuditLogsResponse> => {
+      const params: Record<string, string | number> = {};
+      if (filters.tipo) params.tipo = filters.tipo;
+      if (filters.from) params.from = filters.from;
+      if (filters.to) params.to = filters.to;
+      if (filters.page) params.page = filters.page;
+      if (filters.pageSize) params.pageSize = filters.pageSize;
+      const { data } = await api.get<AuditLogsResponse>('/inventory/audit-logs', { params });
+      return data;
+    },
+    placeholderData: (prev) => prev,
   });
 }
 

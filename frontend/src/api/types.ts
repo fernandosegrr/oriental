@@ -86,6 +86,64 @@ export type UpdateProductoInput = Partial<{
   precio_costo: number;
 }>;
 
+export interface BotSearchLogOpcion {
+  marca: string | null;
+  modelo: string | null;
+  precio_lista: number;
+  precio_descuento: number;
+}
+
+export interface BotSearchLog {
+  id: number;
+  consultado_at: string;
+  medida: string;
+  medida_norm: string | null;
+  marca: string | null;
+  q: string | null;
+  estrategia: string | null;
+  total_resultados: number;
+  opciones: BotSearchLogOpcion[];
+}
+
+export interface SearchLogsFilters {
+  medida?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface SearchLogsResponse {
+  items: BotSearchLog[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface AuditLog {
+  id: number;
+  evento_at: string;
+  tipo: string;
+  usuario_id: number | null;
+  usuario_email: string | null;
+  detalle: Record<string, unknown>;
+}
+
+export interface AuditLogsFilters {
+  tipo?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface AuditLogsResponse {
+  items: AuditLog[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface CreateUsuarioInput {
   email: string;
   nombre: string;

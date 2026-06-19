@@ -10,6 +10,7 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import {
   IconBoxSeam,
+  IconClipboardList,
   IconLogout,
   IconPlus,
   IconUpload,
@@ -39,6 +40,12 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Usuarios',
     to: '/usuarios',
     icon: <IconUsers size={18} />,
+    adminOnly: true,
+  },
+  {
+    label: 'Auditoría bot',
+    to: '/auditoria',
+    icon: <IconClipboardList size={18} />,
     adminOnly: true,
   },
 ];
