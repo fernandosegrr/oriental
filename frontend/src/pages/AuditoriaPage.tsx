@@ -55,26 +55,47 @@ function EstrategiaBadge({ estrategia }: { estrategia: string | null }) {
 
 function OpcionesRow({ log }: { log: BotSearchLog }) {
   const [opened, { toggle }] = useDisclosure(false);
-  if (log.total_resultados === 0) return <Text size="xs" c="dimmed">Sin resultados</Text>;
+
+  if (log.total_resultados === 0) {
+    return <Badge color="red" variant="light" size="sm">Sin resultado</Badge>;
+  }
+
+  const primera = log.opciones[0];
+  const resto = log.total_resultados - 1;
+
   return (
     <>
-      <Group gap={4} style={{ cursor: 'pointer' }} onClick={toggle}>
-        {opened ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
-        <Text size="xs" c="dimmed">
-          {log.total_resultados} opción{log.total_resultados !== 1 ? 'es' : ''}
+      <Group gap={6} wrap="nowrap">
+        <Badge color="teal" variant="light" size="sm">{log.total_resultados}</Badge>
+        <Text size="xs" truncate>
+          {[primera.marca, primera.modelo].filter(Boolean).join(' ')}
+          {' '}
+          <Text span fw={600} c="teal.6">{formatMXN(primera.precio_lista)}</Text>
         </Text>
+        {resto > 0 && (
+          <Text
+            size="xs"
+            c="dimmed"
+            style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
+            onClick={toggle}
+          >
+            {opened ? '▲' : `+${resto} más`}
+          </Text>
+        )}
       </Group>
-      <Collapse in={opened}>
-        <Stack gap={2} mt={4}>
-          {log.opciones.map((o, idx) => (
-            <Text key={idx} size="xs">
-              {[o.marca, o.modelo].filter(Boolean).join(' ') || '—'}
-              {' — '}
-              <Text span fw={600} c="teal.6">{formatMXN(o.precio_lista)}</Text>
-            </Text>
-          ))}
-        </Stack>
-      </Collapse>
+      {resto > 0 && (
+        <Collapse in={opened}>
+          <Stack gap={1} mt={4} pl={4}>
+            {log.opciones.slice(1).map((o, idx) => (
+              <Text key={idx} size="xs" c="dimmed">
+                {[o.marca, o.modelo].filter(Boolean).join(' ')}
+                {' — '}
+                <Text span fw={500} c="teal.6">{formatMXN(o.precio_lista)}</Text>
+              </Text>
+            ))}
+          </Stack>
+        </Collapse>
+      )}
     </>
   );
 }
