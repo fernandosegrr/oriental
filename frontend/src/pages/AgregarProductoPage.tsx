@@ -1,5 +1,4 @@
 import {
-  Alert,
   Button,
   Group,
   NumberInput,
@@ -12,7 +11,6 @@ import {
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import { IconInfoCircle } from '@tabler/icons-react';
 import { useState } from 'react';
 import { getErrorMessage } from '../api/client';
 import { calcPrecioVenta, formatMXN } from '../api/format';
@@ -38,16 +36,6 @@ export function AgregarProductoPage() {
   const [mode, setMode] = useState<Mode>('descripcion');
   const createMut = useCreateProducto();
 
-  if (isVisor) {
-    return (
-      <Stack maw={600}>
-        <Title order={2}>Agregar producto</Title>
-        <Alert color="blue" icon={<IconInfoCircle size={18} />} title="Solo tienes acceso de vista">
-          No tienes permisos para agregar productos. Contacta al administrador si necesitas realizar cambios.
-        </Alert>
-      </Stack>
-    );
-  }
 
   const form = useForm<FormValues>({
     initialValues: {
@@ -72,6 +60,10 @@ export function AgregarProductoPage() {
   const previewVenta = calcPrecioVenta(form.values.precio_costo);
 
   const handleSubmit = async (values: FormValues) => {
+    if (isVisor) {
+      notifications.show({ color: 'blue', title: 'Acceso restringido', message: 'Solo tienes acceso de vista.' });
+      return;
+    }
     // In structured mode require at least a medida so the row is meaningful.
     if (mode === 'estructurado' && !values.medida.trim()) {
       form.setFieldError('medida', 'Ingresa al menos la medida');

@@ -132,6 +132,10 @@ export function CargarExcelPage() {
   };
 
   const handleDrop = async (files: FileWithPath[]) => {
+    if (isVisor) {
+      notifications.show({ color: 'blue', title: 'Acceso restringido', message: 'Solo tienes acceso de vista.' });
+      return;
+    }
     const dropped = files[0];
     if (!dropped) return;
     setFile(dropped);
@@ -180,17 +184,6 @@ export function CargarExcelPage() {
   const analyzing = uploadMut.isPending && !preview;
   const stats = preview?.stats;
   const sample = preview?.sample ?? [];
-
-  if (isVisor) {
-    return (
-      <Stack maw={760}>
-        <Title order={2}>Cargar Excel</Title>
-        <Alert color="blue" icon={<IconInfoCircle size={18} />} title="Solo tienes acceso de vista">
-          No tienes permisos para cargar archivos. Contacta al administrador si necesitas realizar cambios.
-        </Alert>
-      </Stack>
-    );
-  }
 
   return (
     <Stack maw={760}>
