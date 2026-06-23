@@ -1,4 +1,5 @@
 import {
+  Alert,
   Button,
   Group,
   NumberInput,
@@ -11,11 +12,13 @@ import {
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
+import { IconInfoCircle } from '@tabler/icons-react';
 import { useState } from 'react';
 import { getErrorMessage } from '../api/client';
 import { calcPrecioVenta, formatMXN } from '../api/format';
 import { useCreateProducto } from '../api/hooks';
 import type { CreateProductoInput } from '../api/types';
+import { useAuth } from '../auth/AuthContext';
 
 type Mode = 'descripcion' | 'estructurado';
 
@@ -30,8 +33,21 @@ interface FormValues {
 }
 
 export function AgregarProductoPage() {
+  const { user } = useAuth();
+  const isVisor = user?.rol === 'visor';
   const [mode, setMode] = useState<Mode>('descripcion');
   const createMut = useCreateProducto();
+
+  if (isVisor) {
+    return (
+      <Stack maw={600}>
+        <Title order={2}>Agregar producto</Title>
+        <Alert color="blue" icon={<IconInfoCircle size={18} />} title="Solo tienes acceso de vista">
+          No tienes permisos para agregar productos. Contacta al administrador si necesitas realizar cambios.
+        </Alert>
+      </Stack>
+    );
+  }
 
   const form = useForm<FormValues>({
     initialValues: {

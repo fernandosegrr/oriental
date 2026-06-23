@@ -27,6 +27,7 @@ import { useState } from 'react';
 import { getErrorDetalles, getErrorMessage, type FormatoExcelDetalles } from '../api/client';
 import { useUploadExcel } from '../api/hooks';
 import type { Proveedor, UploadResult } from '../api/types';
+import { useAuth } from '../auth/AuthContext';
 
 const XLSX_MIME =
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -113,6 +114,8 @@ function PanelFormatosAceptados({ detalles }: { detalles: FormatoExcelDetalles |
 }
 
 export function CargarExcelPage() {
+  const { user } = useAuth();
+  const isVisor = user?.rol === 'visor';
   const [file, setFile] = useState<FileWithPath | null>(null);
   const [preview, setPreview] = useState<UploadResult | null>(null);
   const [formatoError, setFormatoError] = useState<{
@@ -177,6 +180,17 @@ export function CargarExcelPage() {
   const analyzing = uploadMut.isPending && !preview;
   const stats = preview?.stats;
   const sample = preview?.sample ?? [];
+
+  if (isVisor) {
+    return (
+      <Stack maw={760}>
+        <Title order={2}>Cargar Excel</Title>
+        <Alert color="blue" icon={<IconInfoCircle size={18} />} title="Solo tienes acceso de vista">
+          No tienes permisos para cargar archivos. Contacta al administrador si necesitas realizar cambios.
+        </Alert>
+      </Stack>
+    );
+  }
 
   return (
     <Stack maw={760}>

@@ -1,5 +1,5 @@
 export type Proveedor = 'LLANTERO_OFICIAL';
-export type Rol = 'admin' | 'operador';
+export type Rol = 'admin' | 'operador' | 'visor';
 export type Origen = 'excel' | 'manual';
 
 export interface Producto {

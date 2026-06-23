@@ -30,6 +30,7 @@ import {
   useUpdateProducto,
 } from '../api/hooks';
 import type { InventoryFilters, Producto } from '../api/types';
+import { useAuth } from '../auth/AuthContext';
 
 interface EditFormValues {
   descripcion: string;
@@ -44,6 +45,8 @@ interface EditFormValues {
 const PAGE_SIZE = 20;
 
 export function InventarioPage() {
+  const { user } = useAuth();
+  const isVisor = user?.rol === 'visor';
   const [medida, setMedida] = useState('');
   const [marca, setMarca] = useState('');
   const [conStock, setConStock] = useState(false);
@@ -234,7 +237,7 @@ export function InventarioPage() {
                   <Table.Th>Specs</Table.Th>
                   <Table.Th>Stock</Table.Th>
                   <Table.Th>Precio venta</Table.Th>
-                  <Table.Th>Acciones</Table.Th>
+                  {!isVisor && <Table.Th>Acciones</Table.Th>}
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
@@ -246,25 +249,27 @@ export function InventarioPage() {
                     <Table.Td>{p.specs ?? '—'}</Table.Td>
                     <Table.Td>{p.stock}</Table.Td>
                     <Table.Td>{formatMXN(p.precio_venta)}</Table.Td>
-                    <Table.Td>
-                      <Group gap="xs" wrap="nowrap">
-                        <ActionIcon
-                          variant="subtle"
-                          aria-label="Editar"
-                          onClick={() => openEdit(p)}
-                        >
-                          <IconEdit size={18} />
-                        </ActionIcon>
-                        <ActionIcon
-                          variant="subtle"
-                          color="red"
-                          aria-label="Eliminar"
-                          onClick={() => openDelete(p)}
-                        >
-                          <IconTrash size={18} />
-                        </ActionIcon>
-                      </Group>
-                    </Table.Td>
+                    {!isVisor && (
+                      <Table.Td>
+                        <Group gap="xs" wrap="nowrap">
+                          <ActionIcon
+                            variant="subtle"
+                            aria-label="Editar"
+                            onClick={() => openEdit(p)}
+                          >
+                            <IconEdit size={18} />
+                          </ActionIcon>
+                          <ActionIcon
+                            variant="subtle"
+                            color="red"
+                            aria-label="Eliminar"
+                            onClick={() => openDelete(p)}
+                          >
+                            <IconTrash size={18} />
+                          </ActionIcon>
+                        </Group>
+                      </Table.Td>
+                    )}
                   </Table.Tr>
                 ))}
               </Table.Tbody>
@@ -295,25 +300,27 @@ export function InventarioPage() {
                     {formatMXN(p.precio_venta)}
                   </Text>
                 </Group>
-                <Group gap="xs" mt="sm">
-                  <Button
-                    size="xs"
-                    variant="light"
-                    leftSection={<IconEdit size={16} />}
-                    onClick={() => openEdit(p)}
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    size="xs"
-                    variant="light"
-                    color="red"
-                    leftSection={<IconTrash size={16} />}
-                    onClick={() => openDelete(p)}
-                  >
-                    Eliminar
-                  </Button>
-                </Group>
+                {!isVisor && (
+                  <Group gap="xs" mt="sm">
+                    <Button
+                      size="xs"
+                      variant="light"
+                      leftSection={<IconEdit size={16} />}
+                      onClick={() => openEdit(p)}
+                    >
+                      Editar
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant="light"
+                      color="red"
+                      leftSection={<IconTrash size={16} />}
+                      onClick={() => openDelete(p)}
+                    >
+                      Eliminar
+                    </Button>
+                  </Group>
+                )}
               </Card>
             ))}
           </Stack>

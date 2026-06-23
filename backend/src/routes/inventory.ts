@@ -3,7 +3,7 @@ import multer from 'multer';
 import { z } from 'zod';
 import { query, withTransaction } from '../db';
 import { asyncHandler } from '../middleware/error';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, requireWriteAccess } from '../middleware/auth';
 import { requireApiKey } from '../middleware/apiKey';
 import { calcPrecioVenta } from '../lib/price';
 import { parseDescripcion, normalizeMedida } from '../lib/parseDescripcion';
@@ -75,6 +75,7 @@ const INSERT_COLUMNS = [
 router.post(
   '/upload',
   requireAuth,
+  requireWriteAccess,
   upload.single('file'),
   asyncHandler(async (req, res) => {
     const { proveedor } = UploadBodySchema.parse(req.body);
@@ -251,6 +252,7 @@ const CreateSchema = z
 router.post(
   '/',
   requireAuth,
+  requireWriteAccess,
   asyncHandler(async (req, res) => {
     const body = CreateSchema.parse(req.body);
 
@@ -318,6 +320,7 @@ const UpdateSchema = z.object({
 router.put(
   '/:id',
   requireAuth,
+  requireWriteAccess,
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
     const body = UpdateSchema.parse(req.body);
@@ -370,6 +373,7 @@ router.put(
 router.delete(
   '/:id',
   requireAuth,
+  requireWriteAccess,
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
     await query('UPDATE productos SET activo = false, updated_at = now() WHERE id = $1', [id]);

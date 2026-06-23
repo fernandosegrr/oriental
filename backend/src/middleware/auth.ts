@@ -45,3 +45,11 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction): v
   }
   next();
 }
+
+export function requireWriteAccess(req: Request, res: Response, next: NextFunction): void {
+  if (req.user?.rol === 'visor') {
+    res.status(403).json({ error: 'Solo tienes acceso de vista' });
+    return;
+  }
+  next();
+}

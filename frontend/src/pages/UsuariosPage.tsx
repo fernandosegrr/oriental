@@ -47,6 +47,7 @@ interface EditValues {
 const ROL_DATA = [
   { value: 'admin', label: 'admin' },
   { value: 'operador', label: 'operador' },
+  { value: 'visor', label: 'visor (solo lectura)' },
 ];
 
 export function UsuariosPage() {
