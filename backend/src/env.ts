@@ -32,10 +32,6 @@ const EnvSchema = z.object({
     .default('false')
     .transform((v) => v === 'true'),
 
-  // Multiplicadores de precio (configurables). precio_venta = costo * UTILIDAD * FACTOR
-  MARGIN_UTILIDAD: z.coerce.number().positive().default(1.2),
-  MARGIN_FACTOR: z.coerce.number().positive().default(1.33333),
-
   // Migraciones automáticas al arrancar (usado en Docker).
   RUN_MIGRATIONS: z
     .enum(['true', 'false'])
