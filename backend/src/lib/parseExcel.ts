@@ -38,10 +38,14 @@ export class FormatoExcelError extends Error {
     ejemploFila: { descripcion: string; precioLista: number; precio25Desc: number };
   };
 
-  constructor() {
+  constructor(encontradas?: string[]) {
     super(
       'Formato de Excel no reconocido. ' +
-        'Se esperan una o más hojas con columnas: DESCRIPCION, PRECIO DE LISTA y PRECIO CON % DESC. ' +
+        'Se esperan una o más hojas con columnas: DESCRIPCION, PRECIO DE LISTA y PRECIO CON % DESC., ' +
+        'o bien DESCRIPCION, COSTO VENTA y COSTO DIRECTO. ' +
+        (encontradas
+          ? `Columnas encontradas: ${encontradas.length > 0 ? encontradas.join(', ') : '(ninguna)'}. `
+          : '') +
         'Ejemplo de fila: "P175/70R13 GOODYEAR ASSURANCE 82T BLK" | lista: 1007 | 25% desc: 755.',
     );
     this.name = 'FormatoExcelError';
@@ -63,6 +67,14 @@ export class FormatoExcelError extends Error {
             'C: C.D. (costo distribuidor, se ignora)',
             'E: PRECIO CON 25% DESC. (precio_costo)',
             'F: PRECIO DE LISTA (precio_venta)',
+          ],
+        },
+        {
+          nombre: 'Formato COSTO (una o varias hojas)',
+          columnas: [
+            'DESCRIPCION',
+            'COSTO VENTA (precio_venta, precio de lista)',
+            'COSTO DIRECTO (precio_costo, precio con descuento)',
           ],
         },
       ],
@@ -119,19 +131,33 @@ interface ColMap {
   colCosto: number;
 }
 
+/** Encabezados no vacíos de la fila 1, normalizados (para mensajes de error). */
+function encabezadosDe(sheet: ExcelJS.Worksheet): string[] {
+  const headerRow = sheet.getRow(1);
+  const out: string[] = [];
+  const colCount = sheet.columnCount || 10;
+  for (let c = 1; c <= colCount; c++) {
+    const h = normHeader(headerRow.getCell(c).value);
+    if (h) out.push(h);
+  }
+  return out;
+}
+
 /**
  * Lee la fila 1 de la hoja y detecta los índices de columna por encabezado.
- * Fallback posicional si no se encuentran encabezados reconocidos:
- *   - colDescripcion = 1 (A)
- *   - colVenta       = 2 (B)  ← layout antiguo: precio de lista en B
- *   - colCosto       = 3 (C)  ← layout antiguo: precio con desc en C
+ * Formatos reconocidos (sin fallback posicional para los precios):
+ *   - PRECIO DE LISTA → precio_venta, PRECIO CON % DESC. → precio_costo
+ *   - COSTO VENTA     → precio_venta, COSTO DIRECTO      → precio_costo
+ * Devuelve null si la hoja no tiene ninguno de los dos pares completos.
  */
-function detectarColumnas(sheet: ExcelJS.Worksheet): ColMap {
+function detectarColumnas(sheet: ExcelJS.Worksheet): ColMap | null {
   const headerRow = sheet.getRow(1);
 
   let colDescripcion = 1;
-  let colVenta = 2;
-  let colCosto = 3;
+  let colVenta = 0;
+  let colCosto = 0;
+  let colCostoVenta = 0;
+  let colCostoDirecto = 0;
 
   const colCount = sheet.columnCount || 10;
   for (let c = 1; c <= colCount; c++) {
@@ -151,9 +177,21 @@ function detectarColumnas(sheet: ExcelJS.Worksheet): ColMap {
     if (h.includes('DESC') && !h.includes('DESCRIPCION') && h.includes('PRECIO')) {
       colCosto = c;
     }
+    if (h.includes('COSTO VENTA')) {
+      colCostoVenta = c;
+    }
+    if (h.includes('COSTO DIRECTO')) {
+      colCostoDirecto = c;
+    }
   }
 
-  return { colDescripcion, colVenta, colCosto };
+  if (colVenta && colCosto) {
+    return { colDescripcion, colVenta, colCosto };
+  }
+  if (colCostoVenta && colCostoDirecto) {
+    return { colDescripcion, colVenta: colCostoVenta, colCosto: colCostoDirecto };
+  }
+  return null;
 }
 
 /**
@@ -265,20 +303,33 @@ export async function parseExcelBuffer(
   );
 
   if (hojasValidas.length === 0) {
-    throw new FormatoExcelError();
+    throw new FormatoExcelError(
+      workbook.worksheets.flatMap((ws) => encabezadosDe(ws)),
+    );
   }
 
   // Parsear y fusionar todas las hojas válidas
   const allRows: ParsedRow[] = [];
   const hojasUsadas: string[] = [];
+  const encabezadosNoReconocidos: string[] = [];
+  let formatoReconocido = false;
 
   for (const sheet of hojasValidas) {
     const colMap = detectarColumnas(sheet);
+    if (!colMap) {
+      encabezadosNoReconocidos.push(...encabezadosDe(sheet));
+      continue;
+    }
+    formatoReconocido = true;
     const sheetRows = parsearHoja(sheet, colMap, proveedorNorm);
     if (sheetRows.length > 0) {
       allRows.push(...sheetRows);
       hojasUsadas.push(sheet.name.trim());
     }
+  }
+
+  if (!formatoReconocido) {
+    throw new FormatoExcelError(encabezadosNoReconocidos);
   }
 
   if (allRows.length === 0) {

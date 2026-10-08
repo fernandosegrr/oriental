@@ -54,6 +54,15 @@ function PanelFormatosAceptados({ detalles }: { detalles: FormatoExcelDetalles |
         'F: PRECIO DE LISTA (precio_venta)',
       ],
     },
+    {
+      nombre: 'Formato B (COSTO) — alternativa a los anteriores',
+      columnas: [
+        'CODIGO (opcional, se ignora)',
+        'DESCRIPCION',
+        'COSTO VENTA (precio_venta, precio de lista)',
+        'COSTO DIRECTO (precio_costo, precio con descuento)',
+      ],
+    },
   ];
   const ejemplo = detalles?.ejemploFila ?? {
     descripcion: 'P175/70R13 GOODYEAR ASSURANCE 82T BLK',
@@ -64,7 +73,7 @@ function PanelFormatosAceptados({ detalles }: { detalles: FormatoExcelDetalles |
   return (
     <Stack gap="xs" mt="xs">
       <Text size="sm" fw={600}>
-        Formatos aceptados:
+        Formatos aceptados (el sistema acepta cualquiera de ellos):
       </Text>
 
       {formatos.map((fmt) => (
