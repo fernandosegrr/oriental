@@ -151,6 +151,15 @@ function detectarColumnas(sheet: ExcelJS.Worksheet): ColMap {
     if (h.includes('DESC') && !h.includes('DESCRIPCION') && h.includes('PRECIO')) {
       colCosto = c;
     }
+    // Formato COSTO: "COSTO VENTA CON 25% DESC." (precio al cliente) y
+    // "COSTO DIRECTO" (costo interno). Se ubican por encabezado, así que
+    // columnas vacías intermedias no afectan.
+    if (h.includes('COSTO VENTA')) {
+      colVenta = c;
+    }
+    if (h.includes('COSTO DIRECTO')) {
+      colCosto = c;
+    }
   }
 
   return { colDescripcion, colVenta, colCosto };
