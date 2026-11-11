@@ -38,20 +38,21 @@ const PROVEEDOR: Proveedor = 'LLANTERO_OFICIAL';
 function PanelFormatosAceptados({ detalles }: { detalles: FormatoExcelDetalles | null }) {
   const formatos = detalles?.formatosAceptados ?? [
     {
-      nombre: 'Formato clásico (una hoja)',
+      nombre: 'Formato estándar (una hoja con encabezados en la fila 1)',
       columnas: [
-        'A: DESCRIPCION',
-        'B: PRECIO DE LISTA (precio_venta)',
-        'C: PRECIO CON % DESC. (precio_costo)',
+        'Fila 1 = encabezados. Los productos empiezan en la fila 2 (sin títulos ni filas vacías arriba)',
+        'DESCRIPCION — la medida va primero: "P175/70R13 GOODYEAR ASSURANCE 82T BLK"',
+        'PRECIO DE LISTA — número en pesos (precio_venta)',
+        'PRECIO CON 25% DESC. — número, el 75% de la lista (precio_costo)',
+        'Sin filas de títulos ni separadores (R13, R14…) y sin filas sin precio',
       ],
     },
     {
-      nombre: 'Formato nuevo (una o varias hojas)',
+      nombre: 'Formato COSTO (alternativo)',
       columnas: [
-        'A: DESCRIPCION',
-        'B: EXISTS. (existencias, se ignora)',
-        'E: PRECIO CON 25% DESC. (precio_costo)',
-        'F: PRECIO DE LISTA (precio_venta)',
+        'DESCRIPCION',
+        'COSTO VENTA CON 25% DESC. (precio_costo)',
+        'COSTO DIRECTO (precio_venta)',
       ],
     },
   ];
@@ -235,13 +236,29 @@ export function CargarExcelPage() {
         <Alert
           color="red"
           icon={<IconAlertTriangle size={18} />}
-          title="Formato no reconocido"
+          title="Archivo rechazado — no se cargó nada"
           withCloseButton
           onClose={reset}
         >
           <Text size="sm" mb="xs">
             {formatoError.message}
           </Text>
+          {(formatoError.detalles?.problemas?.length ?? 0) > 0 && (
+            <Stack gap={2} mb="xs">
+              <Text size="sm" fw={600}>
+                Qué hay que corregir:
+              </Text>
+              <List size="sm" spacing={4}>
+                {formatoError.detalles?.problemas?.map((p) => (
+                  <List.Item key={p}>
+                    <Text size="sm" style={{ overflowWrap: 'anywhere' }}>
+                      {p}
+                    </Text>
+                  </List.Item>
+                ))}
+              </List>
+            </Stack>
+          )}
           <PanelFormatosAceptados detalles={formatoError.detalles} />
         </Alert>
       )}

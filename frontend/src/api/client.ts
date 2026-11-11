@@ -42,6 +42,8 @@ export function getErrorMessage(err: unknown, fallback = 'Ocurrió un error'): s
 export interface FormatoExcelDetalles {
   formatosAceptados: { nombre: string; columnas: string[] }[];
   ejemploFila: { descripcion: string; precioLista: number; precio25Desc: number };
+  /** Problemas concretos encontrados en el archivo (encabezados, filas sin precio, etc.). */
+  problemas?: string[];
 }
 
 /** Extrae el campo `detalles` del cuerpo de error cuando el servidor lo incluye. */
